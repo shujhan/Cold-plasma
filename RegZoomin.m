@@ -65,7 +65,6 @@ for index = 1:length(allN)
     if method == 2
         for step = 1:Nstep
             x_tt = x_dd(x,N,omega_0,delta);
-    
             for i = 1:N
                 k1_x = v(i);
                 k1_v = x_tt(i);
@@ -103,33 +102,24 @@ for index = 1:length(allN)
 end
 
 
+
 function Efield = x_dd(x,particle_sum,omega_0,delta)
     for i = 1:particle_sum
         x(i) = mod(x(i),1);
     end
     Efield = zeros(1,particle_sum);
+
     for i = 1:particle_sum
-        pho_bar = 0;
-        a = 0;
-        kernel = 0;
         for j = 1:particle_sum
-            % Efield(i) = Efield(i) - k(x(i),active(j),delta)* omega_0*(1/num_active);  
-            kernel = kernel - k(x(i),x(j),delta)* omega_0*(1/particle_sum);
-            pho_bar = pho_bar + (k(1,x(j),delta) - k(0,x(j),delta)) * omega_0 *(1/particle_sum);
-            a = a + (g(1,x(j),delta) - g(0,x(j),delta)) * omega_0 *(1/particle_sum);            
+            Efield(i) = Efield(i) + k(x(i),x(j),delta)* omega_0*(1/particle_sum);             
         end
-        Efield(i) = Efield(i) + kernel+  pho_bar *(x(i)-0.5) - a;
     end
 end
 
 
-
 function weight = k(x,y,delta)
-    weight = 1/2*(x-y)/((x-y)^2+delta^2)^0.5;
-end
-
-function green = g(x,y,delta)
-    green = -0.5*((x-y)^2+delta^2)^0.5;
+    c_delta = sqrt(1+4*delta^2);
+    weight = -c_delta/2*(x-y)/((x-y)^2+delta^2)^0.5+x-y;
 end
 
 

@@ -4,25 +4,19 @@ clear all
 minX = 0;
 maxX = 2;
 
-% minX = 0.45;
-% maxX = 0.55;
-
 N = 200; 
 vmin= -1; vmax = 1;
-% vmin= -0.1; vmax = 0.1;
 
 epsilon = 0.05;
-delta = 0.05; %0.05,0.002
+delta = 0.002; %0.05,0.002
 omega_0 = 1;
 
 % method 1 is Euler, 2 is RK4
-method = 2;
+method = 1;
 
-dt = 0.04;
+dt = 0.01;
 t_final = 20;
 Nstep = t_final/dt; 
-
-dx = 1/N; 
 
 d1 = 0.05; % chord length of the interval
 
@@ -48,6 +42,7 @@ end
     % only plot active points 
         num_active = (particle_num-1)/2;
         allActive = zeros(1,num_active);
+        all_v = zeros(1,num_active);
         count = 1;
         for i = 1:particle_num
             if (rem(i,2) == 0)
@@ -93,7 +88,9 @@ hold off
 xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
 
-  figure(2); subplot(3,2,1); plot(allActive,all_v,'-r');
+  figure(2); subplot(3,2,1); 
+
+  plot(allActive,all_v,'-r');
   hold on
   plot(x_2,v_2,'-b');
   hold on
@@ -117,7 +114,6 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
                 x_1(i) = x_1(i) + dt * v_1(i);
                 v_1(i) = v_1(i) + dt * x_tt(i);
             end
-
         end
 
         if method ==2
@@ -149,7 +145,6 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
             end
         end
 
-
         for i = 1:num_active
             x_2(i) = allActive(i)+1;
             v_2(i) = all_v(i);
@@ -167,28 +162,25 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
       str = sprintf('t = %0.5g',step*dt);
       figure(1); 
       % plot(x,v); 
-
-      plot(allActive,all_v,'r')
+      plot(allActive,all_v,'-r')
       hold on
-      plot(x_2,v_2,'b')
+      plot(x_2,v_2,'-b')
       hold on
-      plot(x_3,v_3,'g')
+      plot(x_3,v_3,'-g')
       hold on
-      plot(x_4,v_4,'k')
+      plot(x_4,v_4,'-k')
       hold on
-      plot(x_5,v_5,'m')
-
-              z = linspace(minX,maxX,15);
-              y = zeros(length(z),1);
-              plot(z,y,'--k')
-
+      plot(x_5,v_5,'-m')
+      hold on
+      z = linspace(minX,maxX,15);
+      y = zeros(length(z),1);
+      plot(z,y,'--b')
       hold off
-
 
       xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
-        if step == 125 || step == 250 || step == 375 || step == 500 
-        % if step == 400 || step == 800 || step == 1200 || step == 1600 || step == 2000
+        % if step == 125 || step == 250 || step == 375 || step == 500 
+        if step == 400 || step == 800 || step == 1200 || step == 1600 || step == 2000
           figure(2);subplot(3,2,1+part); 
           % plot(x,v,'-o','MarkerSize',1.25);
           plot(allActive,all_v,'r')
@@ -214,7 +206,7 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         count = 1;
         for i = 1:num_interval
             % euclidean distance in phase sapace
-            dist = sqrt((x_1(2*i+1) - x_1(2*i-1))^2 + (v_1(2*i+1) - v_1(2*i-1))^2);
+            dist = ((x_1(2*i+1) - x_1(2*i-1))^2 + (v_1(2*i+1) - v_1(2*i-1))^2)^0.5;
             if (dist > d1)
                 % add the first point
                 new_x_1(count) = x_1(2*i-1); 
@@ -224,7 +216,7 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
                 middle_alpha1 = (alpha(2*i-1) + alpha(2*i))/2;
                 middle_alpha2 = (alpha(2*i+1) + alpha(2*i))/2;
-                % quadratic interpol ation using 3 points in the interval
+                % quadratic interpolation using 3 points in the interval
                 L01 = (middle_alpha1 - alpha(2*i))*(middle_alpha1 - alpha(2*i+1))/((alpha(2*i-1) - alpha(2*i))*(alpha(2*i-1) - alpha(2*i+1)));
                 L11 = (middle_alpha1 - alpha(2*i-1))*(middle_alpha1 - alpha(2*i+1))/((alpha(2*i) - alpha(2*i-1))*(alpha(2*i) - alpha(2*i+1)));
                 L21 = (middle_alpha1 - alpha(2*i-1))*(middle_alpha1 - alpha(2*i))/((alpha(2*i+1) - alpha(2*i-1))*(alpha(2*i+1) - alpha(2*i)));
@@ -243,7 +235,6 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
                 new_alpha(count) = alpha(2*i);
                 new_v_1(count) = v_1(2*i);
                 count = count +1;
-
                 L02 = (middle_alpha2 - alpha(2*i))*(middle_alpha2 - alpha(2*i+1))/((alpha(2*i-1) - alpha(2*i))*(alpha(2*i-1) - alpha(2*i+1)));
                 L12 = (middle_alpha2 - alpha(2*i-1))*(middle_alpha2 - alpha(2*i+1))/((alpha(2*i) - alpha(2*i-1))*(alpha(2*i) - alpha(2*i+1)));
                 L22 = (middle_alpha2 - alpha(2*i-1))*(middle_alpha2 - alpha(2*i))/((alpha(2*i+1) - alpha(2*i-1))*(alpha(2*i+1) - alpha(2*i)));
@@ -271,9 +262,9 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         end
 
         % add the last point
-        new_x_1(count) = x_1(length(x_1));
-        new_alpha(count) = alpha(length(alpha));
-        new_v_1(count) = v_1(length(v_1));
+        new_x_1(count) = x_1(particle_num);
+        new_alpha(count) = alpha(particle_num);
+        new_v_1(count) = v_1(particle_num);
 
         % reset quatrature
         % count is the total particle number, which = 2*particle_num-1
@@ -286,14 +277,17 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         v_1 = new_v_1;
         clear new_x_1 new_v_1 new_alpha
 
+        
     end
 
 
 
 function Efield = x_dd(x,particle_sum,omega_0,delta)
-    for i = 1:particle_sum
-        real_x(i) = mod(x(i),1);
-    end
+    % for i = 1:particle_sum
+    %     x(i) = mod(x(i),1);
+    % end
+    Efield = zeros(1,particle_sum);
+
     % only use active points with even index
     num_active = (particle_sum-1)/2;
     
@@ -301,36 +295,22 @@ function Efield = x_dd(x,particle_sum,omega_0,delta)
     count = 1;
     for i = 1:particle_sum
         if (rem(i,2) == 0)
-            active(count) = real_x(i);
+            active(count) = x(i);
             count = count +1;
         end
     end
 
-    Efield = zeros(1,particle_sum);
     for i = 1:particle_sum
-        pho_bar = 0;
-        a = 0;
-        kernel = 0;
         for j = 1:num_active
-            % Efield(i) = Efield(i) - k(x(i),active(j),delta)* omega_0*(1/num_active);  
-            kernel = kernel - k(real_x(i),active(j),delta)* omega_0*(1/num_active);
-            pho_bar = pho_bar + (k(1,active(j),delta) - k(0,active(j),delta)) * omega_0 *(1/num_active);
-            a = a + (g(1,active(j),delta) - g(0,active(j),delta)) * omega_0 *(1/num_active);            
+            Efield(i) = Efield(i) + k(x(i),active(j),delta)* omega_0*(1/num_active);             
         end
-        Efield(i) = Efield(i) + kernel+  pho_bar *(real_x(i)-0.5) - a;
     end
 end
 
 
-
 function weight = k(x,y,delta)
-    weight = 1/2*(x-y)/((x-y)^2+delta^2)^0.5;
-end
-
-function green = g(x,y,delta)
-    green = -0.5*((x-y)^2+delta^2)^0.5;
+    c_delta = (1+4*delta^2)^0.5;
+    weight = -c_delta/2*(x-y)/((x-y)^2+delta^2)^0.5+x-y;
 end
 
 
-
-    
