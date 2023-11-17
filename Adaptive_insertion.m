@@ -8,12 +8,12 @@ N = 200;
 vmin= -1; vmax = 1;
 
 epsilon = 0.05;
-delta = 0.002; %0.05,0.002
+delta = 0.05; %0.05,0.002
 omega_0 = 1;
 
 % method 1 is Euler, 2 is RK4
 method = 2;
-
+q = -1;
 dt = 0.04;
 t_final = 20;
 Nstep = t_final/dt; 
@@ -55,10 +55,10 @@ x_3 = zeros(1,N);
 v_3 = zeros(1,N);
 x_4 = zeros(1,N);
 v_4 = zeros(1,N);
-% x_5 = zeros(1,N);
-% v_5 = zeros(1,N);
-% x_6 = zeros(1,N);
-% v_6 = zeros(1,N);
+x_5 = zeros(1,N);
+v_5 = zeros(1,N);
+x_6 = zeros(1,N);
+v_6 = zeros(1,N);
 for i = 1:N
     x_2(i) = x(i)+1;
     v_2(i) = v(i);
@@ -69,11 +69,11 @@ for i = 1:N
     x_4(i) = x(i)+2;
     v_4(i) = v(i);
 
-    % x_5(i) = x(i)-2;
-    % v_5(i) = v(i);
-    % 
-    % x_6(i) = x(i)+3;
-    % v_6(i) = v(i);
+    x_5(i) = x(i)-2;
+    v_5(i) = v(i);
+
+    x_6(i) = x(i)+3;
+    v_6(i) = v(i);
 end
 
 num_interval = N;
@@ -87,10 +87,10 @@ hold on
 plot(x_3,v_3,'g')
 hold on
 plot(x_4,v_4,'k')
-% hold on
-% plot(x_5,v_5,'m')
-% hold on
-% plot(x_6,v_6,'m')
+hold on
+plot(x_5,v_5,'m')
+hold on
+plot(x_6,v_6,'m')
 
 
 
@@ -106,11 +106,11 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
   plot(x_3,v_3,'g')
   hold on
   plot(x_4,v_4,'k')
-  % hold on
-  % plot(x_5,v_5,'m')
-  % hold on
-  % plot(x_6,v_6,'m')
-  % hold off
+  hold on 
+  plot(x_5,v_5,'m')
+  hold on
+  plot(x_6,v_6,'m')
+  hold off
 
   axis([ minX maxX vmin vmax])
   title('t = 0');
@@ -191,6 +191,7 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
               x_passive(i) = x_passive(i) + dt * (dxp_1(i)+ 2* dxp_2(i) + 2*dxp_3(i) + dxp_4(i)) / 6;
               v_passive(i) = v_passive(i) + dt * (E_field_passive_1(i)+ 2* E_field_passive_2(i) + 2*E_field_passive_3(i) + E_field_passive_4(i)) / 6;
             end
+
             x_passive(passive_num) = x_passive(1) + 1;
             v_passive(passive_num) = v_passive(1);
         end
@@ -206,29 +207,30 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
             x_4(i) = x(i) +2;
             v_4(i) = v(i);
             
-            % x_5(i) = x(i) -2;
-            % v_5(i) = v(i);
-            % 
-            % x_6(i) = x(i) +3;
-            % v_6(i) = v(i);
+            x_5(i) = x(i) -2;
+            v_5(i) = v(i);
+
+            x_6(i) = x(i) +3;
+            v_6(i) = v(i);
         end
 
       str = sprintf('t = %0.5g',step*dt);
       figure(1); 
       % plot(x,v); 
       plot(x,v,'-r')
+      % plot(x_passive,v_passive,'-r')
+
       hold on
-      % plot(x_passive,v_passive,'-b')
       plot(x_2,v_2,'-b')
       hold on
       plot(x_3,v_3,'-g')
       hold on
       plot(x_4,v_4,'-k')
       hold on
-      % plot(x_5,v_5,'-m')
-      % hold on
-      % plot(x_6,v_6,'-m')
-      % hold on
+      plot(x_5,v_5,'-m')
+      hold on
+      plot(x_6,v_6,'-m')
+      hold on
       z = linspace(minX,maxX,15);
       y = zeros(length(z),1);
       plot(z,y,'--b')
@@ -247,9 +249,9 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
           hold on
           plot(x_4,v_4,'k')
           hold on
-          % plot(x_5,v_5,'m')
-          % hold on
-          % plot(x_6,v_6,'-m')
+          plot(x_5,v_5,'m')
+          hold on
+          plot(x_6,v_6,'-m')
           hold off
           axis([ minX maxX vmin vmax])
           time = step*dt;
@@ -376,14 +378,22 @@ function Efield = x_dd(x_target,x_source,omega_0,delta,wt)
 
     for i = 1:target_num
         for j = 1:source_num
-            Efield(i) = Efield(i) + k(x_target(i),x_source(j),delta)* omega_0*(wt(j));             
+            Efield(i) = Efield(i) - k(x_target(i),x_source(j),delta)* omega_0*(wt(j));             
         end
     end
 end
 
 
 function kernel = k(x,y,delta)
+    z = x-y;
+    while z < -0.5 
+        z = z+1;
+    end
+    while z >= 0.5 
+        z = z-1;
+    end
+        
     c_delta = (1+4*delta^2)^0.5;
-    kernel = -c_delta/2*(x-y)/sqrt((x-y)^2+delta^2)+x-y;
+    kernel = c_delta/2*(z)/sqrt((z)^2+delta^2)-(z);
 end
 
