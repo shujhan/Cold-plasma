@@ -1,6 +1,6 @@
 % function cold_plasma
 clear all
-
+format long
 minX = 0;
 maxX = 2;
 
@@ -8,7 +8,7 @@ N = 200;
 vmin= -1; vmax = 1;
 
 epsilon = 0.05;
-delta = 0.05; %0.05,0.002
+delta = 0.002; %0.05,0.002
 omega_0 = 1;
 
 % method 1 is Euler, 2 is RK4
@@ -19,7 +19,7 @@ t_final = 20;
 Nstep = t_final/dt; 
 
 d1 = 0.05; % chord length of the interval
-
+d2 = 0.05; 
 % passive points
 alpha_passive = zeros(1,N+1);
 x_passive = zeros(1,N+1);
@@ -51,10 +51,10 @@ end
 % only plot active points 
 x_2 = zeros(1,N);
 v_2 = zeros(1,N);
-% x_3 = zeros(1,N);
-% v_3 = zeros(1,N);
-% x_4 = zeros(1,N);
-% v_4 = zeros(1,N);
+x_3 = zeros(1,N);
+v_3 = zeros(1,N);
+x_4 = zeros(1,N);
+v_4 = zeros(1,N);
 % x_5 = zeros(1,N);
 % v_5 = zeros(1,N);
 % x_6 = zeros(1,N);
@@ -63,11 +63,11 @@ for i = 1:N
     x_2(i) = x(i)+1;
     v_2(i) = v(i);
             
-    % x_3(i) = x(i)-1;
-    % v_3(i) = v(i);
-    % 
-    % x_4(i) = x(i)+2;
-    % v_4(i) = v(i);
+    x_3(i) = x(i)-1;
+    v_3(i) = v(i);
+
+    x_4(i) = x(i)+2;
+    v_4(i) = v(i);
 
     % x_5(i) = x(i)-2;
     % v_5(i) = v(i);
@@ -84,9 +84,9 @@ plot(x,v,'r')
 hold on
 plot(x_2,v_2,'b')
 hold on
-% plot(x_3,v_3,'g')
-% hold on
-% plot(x_4,v_4,'k')
+plot(x_3,v_3,'g')
+hold on
+plot(x_4,v_4,'k')
 % hold on
 % plot(x_5,v_5,'m')
 % hold on
@@ -103,9 +103,9 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
   hold on
   plot(x_2,v_2,'-b');
   hold on
-  % plot(x_3,v_3,'g')
-  % hold on
-  % plot(x_4,v_4,'k')
+  plot(x_3,v_3,'g')
+  hold on
+  plot(x_4,v_4,'k')
   % hold on
   % plot(x_5,v_5,'m')
   % hold on
@@ -119,6 +119,8 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
 
     for step = 1:Nstep
+        if method == 1
+
         % TODO: Only take active points into account to get E field
         active_num = length(x);
         passive_num = length(x_passive);
@@ -126,8 +128,6 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         E_field = x_dd(x,x,omega_0,delta,wt);
         E_field_passive = x_dd(x_passive(1:passive_num-1),x,omega_0,delta,wt);
         
-
-        if method == 1
             for i = 1:active_num
                 x(i) = x(i) + dt * v(i);
                 v(i) = v(i) + dt * E_field(i);
@@ -139,30 +139,57 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         end
 
         if method ==2
+            % TODO: Only take active points into account to get E field
+            active_num = length(x);
+            passive_num = length(x_passive);
+   
+
+            dx_1 = v;
+            dxp_1 = v_passive;
+            E_field_1 = x_dd(x,x,omega_0,delta,wt);
+            E_field_passive_1 = x_dd(x_passive(1:passive_num-1),x,omega_0,delta,wt);
+            
             for i = 1:active_num
-                k1_x = v(i);
-                k1_v = E_field(i);
-                k2_x = v(i) + 0.5*dt*k1_x;
-                k2_v = E_field(i) + 0.5*dt * k1_v;
-                k3_x = v(i) + 0.5*dt*k2_x;
-                k3_v = E_field(i) + 0.5*dt * k2_v;
-                k4_x = v(i) + dt*k3_x;
-                k4_v = E_field(i) + dt * k3_v;
-                x(i) = x(i) + dt/6 * (k1_x+2*k2_x+2*k3_x+k4_x);
-                v(i) = v(i) + dt/6 * (k1_v+2*k2_v+2*k3_v+k4_v);
+              xold(i) = x(i) + dt * dx_1(i)/2;
+              vold(i) = v(i) + dt * E_field_1(i)/2;
+              xpold(i) = x_passive(i) + dt * dxp_1(i)/2;
+              vpold(i) = v_passive(i) + dt * E_field_passive_1(i)/2;
             end
 
+            dx_2 = vold;
+            dxp_2 = vpold;
+            E_field_2 = x_dd(xold,xold,omega_0,delta,wt);
+            E_field_passive_2 = x_dd(xpold(1:passive_num-1),xold,omega_0,delta,wt);
+            
             for i = 1:active_num
-                k1_x = v_passive(i);
-                k1_v = E_field_passive(i);
-                k2_x = v_passive(i) + 0.5*dt*k1_x;
-                k2_v = E_field_passive(i) + 0.5*dt * k1_v;
-                k3_x = v_passive(i) + 0.5*dt*k2_x;
-                k3_v = E_field_passive(i) + 0.5*dt * k2_v;
-                k4_x = v_passive(i) + dt*k3_x;
-                k4_v = E_field_passive(i) + dt * k3_v;
-                x_passive(i) = x_passive(i) + dt/6 * (k1_x+2*k2_x+2*k3_x+k4_x);
-                v_passive(i) = v_passive(i) + dt/6 * (k1_v+2*k2_v+2*k3_v+k4_v);
+              xold(i) = x(i) + dt * dx_2(i)/2;
+              vold(i) = v(i) + dt * E_field_2(i)/2;
+              xpold(i) = x_passive(i) + dt * dxp_2(i)/2;
+              vpold(i) = v_passive(i) + dt * E_field_passive_2(i)/2;
+            end
+
+            dx_3 = vold;
+            dxp_3 = vpold;
+            E_field_3 = x_dd(xold,xold,omega_0,delta,wt);
+            E_field_passive_3 = x_dd(xpold(1:passive_num-1),xold,omega_0,delta,wt);
+            
+            for i = 1:active_num
+              xold(i) = x(i) + dt * dx_3(i);
+              vold(i) = v(i) + dt * E_field_3(i);
+              xpold(i) = x_passive(i) + dt * dxp_3(i);
+              vpold(i) = v_passive(i) + dt * E_field_passive_3(i);
+            end
+
+            dx_4 = vold;
+            dxp_4 = vpold;
+            E_field_4 = x_dd(xold,xold,omega_0,delta,wt);
+            E_field_passive_4 = x_dd(xpold(1:passive_num-1),xold,omega_0,delta,wt);
+            
+            for i = 1:active_num
+              x(i) = x(i) + dt * (dx_1(i)+ 2* dx_2(i) + 2*dx_3(i) + dx_4(i)) / 6;
+              v(i) = v(i) + dt * (E_field_1(i)+ 2* E_field_2(i) + 2*E_field_3(i) + E_field_4(i)) / 6;
+              x_passive(i) = x_passive(i) + dt * (dxp_1(i)+ 2* dxp_2(i) + 2*dxp_3(i) + dxp_4(i)) / 6;
+              v_passive(i) = v_passive(i) + dt * (E_field_passive_1(i)+ 2* E_field_passive_2(i) + 2*E_field_passive_3(i) + E_field_passive_4(i)) / 6;
             end
             x_passive(passive_num) = x_passive(1) + 1;
             v_passive(passive_num) = v_passive(1);
@@ -173,11 +200,11 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
             x_2(i) = x(i)+1;
             v_2(i) = v(i);
             
-            % x_3(i) = x(i) - 1;
-            % v_3(i) = v(i);
-            % 
-            % x_4(i) = x(i) +2;
-            % v_4(i) = v(i);
+            x_3(i) = x(i) - 1;
+            v_3(i) = v(i);
+
+            x_4(i) = x(i) +2;
+            v_4(i) = v(i);
             
             % x_5(i) = x(i) -2;
             % v_5(i) = v(i);
@@ -191,12 +218,13 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
       % plot(x,v); 
       plot(x,v,'-r')
       hold on
-      % plot(x_2,v_2,'-b')
-      % hold on
-      % plot(x_3,v_3,'-g')
-      % hold on
-      % plot(x_4,v_4,'-k')
-      % hold on
+      % plot(x_passive,v_passive,'-b')
+      plot(x_2,v_2,'-b')
+      hold on
+      plot(x_3,v_3,'-g')
+      hold on
+      plot(x_4,v_4,'-k')
+      hold on
       % plot(x_5,v_5,'-m')
       % hold on
       % plot(x_6,v_6,'-m')
@@ -208,17 +236,17 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
       xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
-        % if step == 125 || step == 250 || step == 375 || step == 500 
-        if step == 400 || step == 800 || step == 1200 || step == 1600 || step == 2000
+        if step == 125 || step == 250 || step == 375 || step == 500 
+        % if step == 400 || step == 800 || step == 1200 || step == 1600 || step == 2000
           figure(2);subplot(3,2,1+part); 
           plot(x,v,'r')
           hold on
-          % plot(x_2,v_2,'b')
-          % hold on
-          % plot(x_3,v_3,'g')
-          % hold on
-          % plot(x_4,v_4,'k')
-          % hold on
+          plot(x_2,v_2,'b')
+          hold on
+          plot(x_3,v_3,'g')
+          hold on
+          plot(x_4,v_4,'k')
+          hold on
           % plot(x_5,v_5,'m')
           % hold on
           % plot(x_6,v_6,'-m')
@@ -251,8 +279,9 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
 
             % euclidean distance in phase sapace
             dist = sqrt((x2-x0)^2 + (v2-v0)^2);
-           
+            dist2 = sqrt((x1-(x2+x0)/2)^2 + (v1-(v2+v0)/2)^2);
             if (dist > d1)
+            % if (dist > d1 || dist2 > d2)
                 % add first point to passive
                 new_x_passive(count_passive) = x0;
                 new_alpha_passive(count_passive) = a0;
