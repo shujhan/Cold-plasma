@@ -8,14 +8,14 @@ N = 200;
 vmin= -1; vmax = 1;
 
 epsilon = 0.05;
-delta = 0.05; %0.05,0.002
+delta = 0.04; %0.05,0.002
 omega_0 = 1;
 
 % method 1 is Euler, 2 is RK4
-method = 2;
+method = 1;
 q = -1;
 dt = 0.04;
-t_final = 20;
+t_final = 0.2;
 Nstep = t_final/dt; 
 
 d1 = 0.05; % chord length of the interval
@@ -260,6 +260,7 @@ xlabel('x'); ylabel('v'); title(str); axis([ minX maxX vmin vmax])
         end
 
 
+        disp(length(x));
 
 
         % examine each interval in one period x,v
