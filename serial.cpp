@@ -12,7 +12,7 @@ using namespace std::chrono;
 vector<double> E_field(vector<double> &x_target, const vector<double> &x_source, int omega_0, double delta, vector<double> &wt);
 void Euler(vector<double> &x, vector<double> &v, vector<double> &x_passive, vector<double> &v_passive, vector<double> &wt,double dt,int omega_0, double delta);
 void RK4(vector<double> &x, vector<double> &v, vector<double> &x_passive, vector<double> &v_passive, vector<double> &wt,double dt,int omega_0, double delta);
-void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vector<double> &x_passive, vector<double> &v_passive, vector<double> &alpha_passive, vector<double> &wt, double d1);
+void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vector<double> &x_passive, vector<double> &v_passive, vector<double> &alpha_passive, vector<double> &wt, double d1, double d2);
 void write(vector<double> &x, vector<double> &v);
 // void setwt();
 
@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
     const double epsilon = 0.05; 
     const double delta = 0.04;
     const double d1 = 0.05;
+    const double d2 = 0.05;
     const double dt = 0.04;
 
     const double method = 2; // 1: euler 2: RK4
@@ -124,7 +125,9 @@ int main(int argc, char* argv[]) {
         } 
 	// cout << v.size() << endl;
         // adaptive insertion
-        insertion(x,v,alpha,x_passive,v_passive,alpha_passive,wt,d1);
+	if (step != Nstep) {
+	  insertion(x,v,alpha,x_passive,v_passive,alpha_passive,wt,d1,d2);
+	}
     }
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end-start);
@@ -313,7 +316,7 @@ void RK4(vector<double> &x, vector<double> &v, vector<double> &x_passive, vector
 
 
 
-void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vector<double> &x_passive, vector<double> &v_passive, vector<double> &alpha_passive, vector<double> &wt, double d1) {
+void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vector<double> &x_passive, vector<double> &v_passive, vector<double> &alpha_passive, vector<double> &wt, double d1, double d2) {
     int num_interval = x.size();
     int count = 1;
     int count_passive = 1;
@@ -342,8 +345,8 @@ void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vect
 
         //  euclidean distance in phase sapace   
         double dist = sqrt((x2-x0)*(x2-x0) + (v2-v0)*(v2-v0));
-        // dist2 = sqrt((x1-(x2+x0)/2)^2 + (v1-(v2+v0)/2)^2);
-        if (dist > d1) {
+        double dist2 = sqrt((x1-(x2+x0)/2)* (x1-(x2+x0)/2) + (v1-(v2+v0)/2)* (v1-(v2+v0)/2));
+        if (dist > d1 || dist2 > d2) {
             // add first point to passive
             apnew.push_back(a0);
             xpnew.push_back(x0);
