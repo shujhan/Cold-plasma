@@ -15,7 +15,7 @@ omega_0 = 1;
 method = 1;
 q = -1;
 dt = 0.04;
-t_final = 0.2;
+t_final = 20;
 Nstep = t_final/dt; 
 
 d1 = 0.05; % chord length of the interval
