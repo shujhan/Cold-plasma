@@ -14,7 +14,7 @@ vector<double> E_field(vector<double> &x_target, const vector<double> &x_source,
 void Euler(vector<double> &x, vector<double> &v, vector<double> &x_passive, vector<double> &v_passive, vector<double> &wt,double dt,int omega_0, double delta);
 void RK4(vector<double> &x, vector<double> &v, vector<double> &x_passive, vector<double> &v_passive, vector<double> &wt,double dt,int omega_0, double delta);
 void insertion(vector<double> &x, vector<double> &v, vector<double> &alpha, vector<double> &x_passive, vector<double> &v_passive, vector<double> &alpha_passive, vector<double> &wt, double d1,double d2);
-void write(vector<double> &x, vector<double> &v);
+void write(vector<double> &x, vector<double> &v,int step);
 // void setwt();
 
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     const double dt = 0.04;
 
     const double method = 2; // 1: euler 2: RK4
-    const double t_final = 20;
+    const double t_final = 35;
 
 
     // const int N = stoi(argv[1]);
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i <= N; i++) {
         alpha_passive[i] = i / N;
      //   cout << alpha_passive[i] << "!";
-	x_passive[i] = alpha_passive[i] + epsilon * sin(2 * M_PI * alpha_passive[i]);
+    x_passive[i] = alpha_passive[i] + epsilon * sin(2 * M_PI * alpha_passive[i]);
         v_passive[i] = 0;
     }
 
@@ -79,68 +79,43 @@ int main(int argc, char* argv[]) {
 
     int Nstep = static_cast<int>(t_final / dt);
 
-
-   // cout << "\n";	
-   // cout << "alpha: ";
-   // for (int i = 0; i < x.size(); i++) {
-     //   cout << alpha[i] << " ";
-  //  }
-   // cout << "\n";
-   // cout << "alpha_pass: ";
-   // for (int i = 0; i < x.size()+1; i++) {
-     //   cout << alpha_passive[i] << " ";
-   // }
-   // cout << "\n";
-
-
-
-
-
-
-   // cout << "x: ";
-   // for (int i = 0; i < x.size(); i++) {
-     //   cout << x[i] << " ";
-   // }
-   // cout << "\n";
-
-   // cout << "v: ";
-   // for (int i = 0; i < v.size(); i++) {
-     //   cout << v[i] << " ";
-   // }
-
-
-
-    auto start = high_resolution_clock::now();
-    for (int step = 1; step <= Nstep; step++) {
-        if (method == 1) {
+    if (method == 1) {
+        auto start = high_resolution_clock::now();
+        for (int step = 1; step <= Nstep; step++) {
             Euler(x, v, x_passive, v_passive, wt,dt,omega_0,delta);
+            if (step != Nstep) {
+                insertion(x,v,alpha,x_passive,v_passive,alpha_passive,wt,d1,d2);
+            }
         }
-
-        if (method == 2) {
-            RK4(x, v, x_passive, v_passive, wt,dt,omega_0,delta);
-        }
-
-        if (step == Nstep){
-           write(x, v);
-	   cout << x.size() << endl;
-        } 
-        // adaptive insertion
-	if(step != Nstep) {
-          insertion(x,v,alpha,x_passive,v_passive,alpha_passive,wt,d1,d2);
-	}
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(end-start);
+        cout << "time used: " << duration.count() << " milliseconds"  <<  endl;
     }
-    auto end = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(end-start);
-    cout << "time used: " << duration.count() << " milliseconds"  <<  endl;
 
-
+    if (method == 2) {
+        auto start = high_resolution_clock::now();
+        for (int step = 1; step <= Nstep; step++) {
+            RK4(x, v, x_passive, v_passive, wt,dt,omega_0,delta);
+            if (step != Nstep) {
+                insertion(x,v,alpha,x_passive,v_passive,alpha_passive,wt,d1,d2);
+            }
+            cout << step << ", " << x.size() << endl;
+            write(x,v,step);
+        }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(end-start);
+        cout << "time used: " << duration.count() << " milliseconds"  <<  endl;
+    }
+    // write(x,v,Nstep);
+    // cout << x.size() << endl;
     return 0;
 }
 
-void write(vector<double> &x, vector<double> &v) {
+void write(vector<double> &x, vector<double> &v, int step) {
 
     // Open a file for writing
-    std::ofstream outputFile("vector.txt");
+    std::string filename = "vector" + std::to_string(step) + ".txt";
+    std::ofstream outputFile(filename);
 
     // Check if the file is opened successfully
     if (!outputFile.is_open()) {
@@ -187,14 +162,15 @@ vector<double> E_field(vector<double> &x_target, const vector<double> &x_source,
     for (int i = 0; i < target_num; ++i) {
         for (int j = 0; j < source_num; ++j) {
             double diff = x_target[i] - x_source[j];
-            while (diff < -0.5) {
-                diff = diff+1;
-            }
-            while (diff >= 0.5) {
-                diff = diff-1;
-            }
-          
-	    
+            diff = diff - round(diff);
+
+            // while (diff < -0.5) {
+            //     diff = diff+1;
+            // }
+            // while (diff >= 0.5) {
+            //     diff = diff-1;
+            // }
+
             double c_delta = sqrt(1+4*delta*delta);
             E_Field[i] -= (c_delta/2*diff/sqrt(diff*diff+delta*delta)-diff) * omega_0 * wt[j];
         }
